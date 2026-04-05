@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Economic Slowdown — Interactive Story</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --bg:#07111f;
+      --panel:#0f1b2d;
+      --panel-2:#13233b;
+      --text:#e8eef7;
+      --muted:#9cb0c9;
+      --line:rgba(255,255,255,.08);
+      --accent:#66e3c4;
+      --accent-2:#7aa7ff;
+      --accent-3:#ffd166;
+      --danger:#ff7b7b;
+      --shadow:0 10px 30px rgba(0,0,0,.25);
+      --radius:20px;
+      --max:1200px;
+    }
+
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(122,167,255,.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(102,227,196,.14), transparent 25%),
+        linear-gradient(180deg, #07111f, #0a1422 40%, #08111e 100%);
+      color:var(--text);
+      line-height:1.6;
+    }
+
+    a { color:var(--accent); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      backdrop-filter: blur(14px);
+      background:rgba(7,17,31,.72);
+      border-bottom:1px solid var(--line);
+    }
+
+    .topbar-inner{
+      max-width:var(--max);
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:14px 20px;
+    }
+
+    .brand{
+      font-weight:800;
+      letter-spacing:.02em;
+      white-space:nowrap;
+    }
+
+    .progress-wrap{
+      flex:1;
+      height:8px;
+      background:rgba(255,255,255,.06);
+      border-radius:999px;
+      overflow:hidden;
+    }
+
+    .progress{
+      width:0%;
+      height:100%;
+      background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+
+    .hero{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:72px 20px 40px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:28px;
+      align-items:end;
+    }
+
+    .eyebrow{
+      display:inline-block;
+      font-size:.82rem;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      color:var(--accent);
+      margin-bottom:14px;
+      font-weight:700;
+    }
+
+    h1{
+      font-size:clamp(2.4rem, 5vw, 5rem);
+      line-height:1.02;
+      margin:0 0 18px;
+      letter-spacing:-.04em;
+    }
+
+    .hero p{
+      font-size:1.08rem;
+      color:var(--muted);
+      max-width:760px;
+      margin:0 0 22px;
+    }
+
+    .jump-links{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:22px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:999px;
+      color:var(--text);
+      font-size:.95rem;
+    }
+
+    .hero-card{
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      border-radius:var(--radius);
+      padding:20px;
+    }
+
+    .hero-card h3{
+      margin:0 0 10px;
+      font-size:1rem;
+      color:var(--accent-3);
+    }
+
+    .hero-card p{
+      margin:0 0 18px;
+      font-size:.98rem;
+    }
+
+    .ticker{
+      display:grid;
+      gap:12px;
+    }
+
+    .ticker-item{
+      display:flex;
+      justify-content:space-between;
+      gap:18px;
+      padding:12px 14px;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:14px;
+    }
+
+    .ticker-item span:last-child{
+      color:var(--accent);
+      font-weight:700;
+    }
+
+    main{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:10px 20px 80px;
+    }
+
+    .section{
+      padding:50px 0;
+      border-bottom:1px solid var(--line);
+    }
+
+    .section-grid{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap:26px;
+    }
+
+    .section-nav{
+      position:sticky;
+      top:78px;
+      align-self:start;
+    }
+
+    .section-label{
+      color:var(--accent-3);
+      font-size:.85rem;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      margin-bottom:10px;
+      font-weight:700;
+    }
+
+    .section-nav h2{
+      margin:0 0 12px;
+      font-size:2rem;
+      line-height:1.05;
+      letter-spacing:-.03em;
+    }
+
+    .section-nav p{
+      color:var(--muted);
+      margin:0;
+    }
+
+    .story{
+      display:grid;
+      gap:18px;
+    }
+
+    .story-card{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.025));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:22px;
+      box-shadow:var(--shadow);
+    }
+
+    .story-card p{
+      margin:0;
+      color:#d8e3f3;
+    }
+
+    .lede{
+      font-size:1.15rem;
+    }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:18px;
+    }
+
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:18px;
+    }
+
+    .stat{
+      padding:18px;
+      border-radius:18px;
+      background:var(--panel);
+      border:1px solid var(--line);
+    }
+
+    .stat .kicker{
+      font-size:.84rem;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      margin-bottom:10px;
+    }
+
+    .stat .value{
+      font-size:2rem;
+      font-weight:800;
+      letter-spacing:-.04em;
+      margin-bottom:6px;
+    }
+
+    .stat p{
+      color:var(--muted);
+      margin:0;
+      font-size:.95rem;
+    }
+
+    .chart-card{
+      background:linear-gradient(180deg, rgba(19,35,59,.95), rgba(15,27,45,.95));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:20px;
+      box-shadow:var(--shadow);
+    }
+
+    .chart-card h3{
+      margin:0 0 8px;
+      font-size:1.05rem;
+    }
+
+    .chart-card p{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-size:.96rem;
+    }
+
+    canvas{
+      width:100% !important;
+      max-height:360px;
+    }
+
+    details{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(255,255,255,.03);
+      padding:14px 16px;
+    }
+
+    summary{
+      cursor:pointer;
+      font-weight:700;
+      color:#f0f5ff;
+    }
+
+    details p{
+      margin:12px 0 0;
+      color:var(--muted);
+    }
+
+    .linkout{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-top:12px;
+      font-weight:700;
+    }
+
+    .simulator{
+      display:grid;
+      gap:16px;
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:16px;
+    }
+
+    .control{
+      padding:16px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+    }
+
+    .control label{
+      display:block;
+      font-size:.92rem;
+      font-weight:700;
+      margin-bottom:8px;
+    }
+
+    .control input[type="range"]{
+      width:100%;
+    }
+
+    .mini{
+      color:var(--muted);
+      font-size:.92rem;
+      margin-top:6px;
+    }
+
+    .sim-output{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:16px;
+    }
+
+    .score-box{
+      background:linear-gradient(180deg, rgba(102,227,196,.08), rgba(122,167,255,.06));
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:20px;
+    }
+
+    .score{
+      font-size:3rem;
+      font-weight:900;
+      line-height:1;
+      margin:8px 0;
+      letter-spacing:-.05em;
+    }
+
+    .tag{
+      display:inline-block;
+      margin-top:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      font-size:.9rem;
+      color:var(--accent);
+      font-weight:700;
+    }
+
+    .actions-list{
+      display:grid;
+      gap:10px;
+    }
+
+    .action-item{
+      padding:12px 14px;
+      border-radius:14px;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      color:#dce7f6;
+    }
+
+    .quote{
+      padding:22px;
+      border-left:4px solid var(--accent);
+      background:rgba(255,255,255,.03);
+      border-radius:0 16px 16px 0;
+      color:#eef4ff;
+      font-size:1.12rem;
+    }
+
+    footer{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:26px 20px 80px;
+      color:var(--muted);
+    }
+
+    @media (max-width: 960px){
+      .hero,
+      .section-grid,
+      .sim-output{
+        grid-template-columns:1fr;
+      }
+      .section-nav{
+        position:relative;
+        top:0;
+      }
+      .grid-2,
+      .grid-3,
+      .controls{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">Economic Slowdown</div>
+      <div class="progress-wrap"><div class="progress" id="progressBar"></div></div>
+      <a href="#summary" class="pill">Skip to summary</a>
+    </div>
+  </div>
+
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Interactive longform feature</div>
+      <h1>When an economy slows, the story rarely begins where people think it does.</h1>
+      <p>
+        It begins quietly: a central bank turns the screws, households flinch at higher repayments,
+        businesses delay decisions, and confidence drains out of the room one meeting at a time.
+        This page follows the slowdown as a connected story — from <a href="#causes">cause</a> to
+        <a href="#impacts">impact</a>, through the people and sectors that may <a href="#beneficiaries">benefit</a>,
+        and finally into <a href="#actions">what you can actually do</a>.
+      </p>
+
+      <div class="jump-links">
+        <a class="pill" href="#causes">Why it starts</a>
+        <a class="pill" href="#impacts">Where it hurts</a>
+        <a class="pill" href="#beneficiaries">Who gains</a>
+        <a class="pill" href="#actions">How to respond</a>
+        <a class="pill" href="#summary">Final summary</a>
+      </div>
+    </div>
+
+    <div class="hero-card">
+      <h3>The story at a glance</h3>
+      <p>
+        This is a modelled explainer page with illustrative data visualisations designed for
+        storytelling, not live economic feeds.
+      </p>
+      <div class="ticker">
+        <div class="ticker-item"><span>Rates rise</span><span>borrowing cools</span></div>
+        <div class="ticker-item"><span>Consumers retreat</span><span>spending slows</span></div>
+        <div class="ticker-item"><span>Margins compress</span><span>hiring weakens</span></div>
+        <div class="ticker-item"><span>Valuations reset</span><span>cash gets stronger</span></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" id="causes">
+      <div class="section-grid">
+        <aside class="section-nav">
+          <div class="section-label">Part one</div>
+          <h2>The causes</h2>
+          <p>Not one shock. A chain reaction.</p>
+        </aside>
+
+        <div class="story">
+          <div class="story-card">
+            <p class="lede">
+              Economic slowdowns are often explained as if they were accidents. In reality, many are engineered
+              in part — or at least intensified — by the deliberate cooling of demand. Higher interest rates do not
+              merely tame inflation; they alter behaviour. They make mortgages heavier, investment less appealing,
+              and caution more rational than risk.
+            </p>
+          </div>
+
+          <div class="grid-3">
+            <div class="stat">
+              <div class="kicker">Monetary pressure</div>
+              <div class="value" data-count="7.5">0</div>
+              <p>Illustrative peak policy pressure index as rate settings bite across households and firms.</p>
+            </div>
+            <div class="stat">
+              <div class="kicker">Consumer fatigue</div>
+              <div class="value" data-count="6.2">0</div>
+              <p>Savings buffers thin, discretionary spending falls back, and caution takes hold.</p>
+            </div>
+            <div class="stat">
+              <div class="kicker">Global friction</div>
+              <div class="value" data-count="5.8">0</div>
+              <p>Trade disruptions, shipping stress, elections, conflict, and policy uncertainty.</p>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3>How the pressure builds</h3>
+            <p>
+              A slowdown is usually cumulative. Rates rise first, confidence weakens next, and demand follows.
+              Each line below reinforces the others.
+            </p>
+            <canvas id="causesChart"></canvas>
+          </div>
+
+          <details>
+            <summary>Editorial note: what often gets missed here?</summary>
+            <p>
+              Productivity drag, weak business formation, wage-price mismatches, housing shortages, and delayed
+              policy responses often sit beneath the headline explanation. Slowdowns are rarely just “about rates”.
+              They are about fragility exposed by rates.
+            </p>
+          </details>
+
+          <div class="story-card">
+            <p>
+              And that is where the narrative shifts. What begins as policy becomes psychology. Households cancel
+              renovations. Founders postpone hiring. CFOs preserve cash. Banks tighten standards. By the time the
+              broader public says the word “slowdown,” behaviour has already changed. The next question is no longer
+              why it started, but <a href="#impacts">where the damage lands first</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="impacts">
+      <div class="section-grid">
+        <aside class="section-nav">
+          <div class="section-label">Part two</div>
+          <h2>The impacts</h2>
+          <p>How a macro shift becomes personal.</p>
+        </aside>
+
+        <div class="story">
+          <div class="story-card">
+            <p class="lede">
+              Slowdowns do not hit like lightning; they spread like weather. First the market reprices. Then revenue
+              forecasts slip. Then businesses stop talking about expansion and start talking about efficiency. That is
+              when the macro story becomes a household story.
+            </p>
+          </div>
+
+          <div class="grid-2">
+            <div class="chart-card">
+              <h3>Sectors under strain</h3>
+              <p>
+                Interest-sensitive and discretionary sectors usually feel the chill first.
+              </p>
+              <canvas id="impactBar"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Household response pattern</h3>
+              <p>
+                Families typically shift from spending freely to prioritising essentials and debt control.
+              </p>
+              <canvas id="householdDonut"></canvas>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="stat">
+              <div class="kicker">Hiring</div>
+              <div class="value" data-count="3.1">0</div>
+              <p>Illustrative decline in hiring appetite before widespread layoffs appear.</p>
+            </div>
+            <div class="stat">
+              <div class="kicker">Investment</div>
+              <div class="value" data-count="4.4">0</div>
+              <p>Projects get delayed as capital becomes more expensive and demand less certain.</p>
+            </div>
+            <div class="stat">
+              <div class="kicker">Confidence</div>
+              <div class="value" data-count="2.7">0</div>
+              <p>Consumer and business sentiment soften faster than official data often shows.</p>
+            </div>
+          </div>
+
+          <div class="quote">
+            “The slowdown becomes real not when the charts turn, but when ordinary decisions change:
+            fewer dinners out, fewer hires, fewer bets on the future.”
+          </div>
+
+          <details>
+            <summary>Important segment: second-order effects</summary>
+            <p>
+              The first-order impact is weaker spending. The second-order impact is weaker bargaining power, more
+              conservative lending, stretched suppliers, and a gradual reset in asset prices. Those follow-on effects
+              often shape the recovery just as much as the slowdown itself.
+            </p>
+          </details>
+
+          <div class="story-card">
+            <p>
+              Yet economic pain is never distributed evenly. Some businesses lose pricing power. Others suddenly gain
+              market share. Some investors freeze. Others find their best entry points in years. Which brings us to the
+              least intuitive chapter of the story: <a href="#beneficiaries">who actually benefits when growth slows</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="beneficiaries">
+      <div class="section-grid">
+        <aside class="section-nav">
+          <div class="section-label">Part three</div>
+          <h2>Who benefits</h2>
+          <p>In every reset, someone gains leverage.</p>
+        </aside>
+
+        <div class="story">
+          <div class="story-card">
+            <p class="lede">
+              Recessions and slowdowns are usually described in the language of loss. But they are also periods of
+              redistribution. Cash becomes more valuable. Patience becomes a competitive advantage. The ability to buy,
+              hire, negotiate, or expand when others cannot becomes its own form of power.
+            </p>
+          </div>
+
+          <div class="grid-2">
+            <div class="chart-card">
+              <h3>Potential beneficiaries</h3>
+              <p>
+                Not winners in the moral sense — but sectors and actors often positioned to gain.
+              </p>
+              <canvas id="benefitPie"></canvas>
+            </div>
+
+            <div class="story-card">
+              <p>
+                Cash-rich firms can acquire weaker rivals. Discount retailers attract stretched consumers.
+                Recruiters serving resilient industries can find stronger talent pools. Long-term investors with
+                liquidity may finally see prices that reward patience. Even renters and job-switchers can, in some
+                environments, regain negotiating power as overheated markets cool.
+              </p>
+              <a class="linkout" href="#actions">See how to position for that →</a>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="stat">
+              <div class="kicker">Cash advantage</div>
+              <div class="value" data-count="8.4">0</div>
+              <p>Liquidity matters more when credit is expensive and optionality is scarce.</p>
+            </div>
+            <div class="stat">
+              <div class="kicker">Pricing reset</div>
+              <div class="value" data-count="6.9">0</div>
+              <p>Assets, services, and labour can all become more negotiable.</p>
+            </div>
+            <div class="stat">
+              <div class="kicker">Market share</div>
+              <div class="value" data-count="5.6">0</div>
+              <p>Efficient operators often emerge stronger as weaker competitors retreat.</p>
+            </div>
+          </div>
+
+          <details>
+            <summary>Important segment: beneficiaries you might not think of</summary>
+            <p>
+              Advisory firms focused on restructuring, insolvency specialists, debt managers, budget brands,
+              cybersecurity, essential healthcare, repair businesses, and training providers can all see resilience
+              or even growth depending on the shape of the downturn.
+            </p>
+          </details>
+
+          <div class="story-card">
+            <p>
+              Benefit, though, is not automatic. It depends on preparation. Liquidity held too late can miss the turn.
+              Risk taken too early can become forced selling. So the useful question is not merely who benefits in theory,
+              but <a href="#actions">what a household, founder, or investor can do in practice</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="actions">
+      <div class="section-grid">
+        <aside class="section-nav">
+          <div class="section-label">Part four</div>
+          <h2>What you can do</h2>
+          <p>From fear to positioning.</p>
+        </aside>
+
+        <div class="story">
+          <div class="story-card">
+            <p class="lede">
+              The best response to a slowdown is rarely dramatic. It is disciplined. In fragile periods, resilience
+              beats optimism and flexibility beats bravado. That means building cash buffers, protecting income,
+              reducing fragility, and deploying risk with precision rather than impulse.
+            </p>
+          </div>
+
+          <div class="chart-card">
+            <h3>Response priorities</h3>
+            <p>
+              In a slower economy, the goal shifts from maximum growth to durable positioning.
+            </p>
+            <canvas id="actionsRadar"></canvas>
+          </div>
+
+          <div class="simulator chart-card">
+            <h3>Interactive positioning simulator</h3>
+            <p>
+              Move the sliders to model how prepared you are for a slowdown. This is a simple illustrative framework.
+            </p>
+
+            <div class="controls">
+              <div class="control">
+                <label for="cash">Cash buffer</label>
+                <input type="range" id="cash" min="0" max="10" value="6" />
+                <div class="mini">How much breathing room do you have?</div>
+              </div>
+              <div class="control">
+                <label for="debt">Debt load</label>
+                <input type="range" id="debt" min="0" max="10" value="5" />
+                <div class="mini">Higher debt reduces resilience.</div>
+              </div>
+              <div class="control">
+                <label for="income">Income stability</label>
+                <input type="range" id="income" min="0" max="10" value="7" />
+                <div class="mini">How dependable is your cashflow?</div>
+              </div>
+            </div>
+
+            <div class="sim-output">
+              <div class="score-box">
+                <div class="kicker">Readiness score</div>
+                <div class="score" id="score">0</div>
+                <div id="scoreText">Calculating…</div>
+                <div class="tag" id="tag">Loading</div>
+              </div>
+
+              <div class="actions-list" id="recommendations"></div>
+            </div>
+          </div>
+
+          <details>
+            <summary>Important segment: practical responses by audience</summary>
+            <p>
+              Households: cut fragility, not joy entirely; refinance where possible; protect emergency savings.
+              Founders: extend runway, protect margins, tighten hiring criteria, sell value not hype.
+              Investors: stage entries, keep optionality, avoid forced leverage, buy quality when price and balance sheet align.
+            </p>
+          </details>
+
+          <div class="story-card">
+            <p>
+              The slowdown, then, is not simply a warning. It is a filter. It exposes weak assumptions, overextended
+              balance sheets, and stories built on easy money. But it also rewards patience, discipline, and the rare
+              person willing to plan before confidence returns. Which leaves only the closing question:
+              <a href="#summary">what is the larger meaning of the cycle itself?</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="summary">
+      <div class="section-grid">
+        <aside class="section-nav">
+          <div class="section-label">Final chapter</div>
+          <h2>The summary</h2>
+          <p>Slowdowns end. Positioning lasts.</p>
+        </aside>
+
+        <div class="story">
+          <div class="story-card">
+            <p class="lede">
+              Economic slowdowns feel like endings while they are happening. In truth, they are resets. They force the
+              repricing of assets, the rewriting of business plans, the reevaluation of careers, and the rediscovery of
+              what actually matters in a balance sheet. They are painful partly because they reveal what easy growth had concealed.
+            </p>
+          </div>
+
+          <div class="quote">
+            The core lesson is simple: the same forces that make a slowdown uncomfortable can also make it transformative.
+            Lower prices, less noise, stricter discipline, and clearer priorities often lay the groundwork for the next expansion.
+          </div>
+
+          <div class="grid-2">
+            <div class="story-card">
+              <p>
+                <strong>Cause:</strong> tighter money, weaker confidence, global friction, and delayed reactions compound
+                into slower demand.
+              </p>
+            </div>
+            <div class="story-card">
+              <p>
+                <strong>Impact:</strong> households get cautious, sectors reprioritise, hiring softens, and markets reset.
+              </p>
+            </div>
+            <div class="story-card">
+              <p>
+                <strong>Beneficiaries:</strong> cash holders, efficient operators, discount players, and disciplined long-term buyers.
+              </p>
+            </div>
+            <div class="story-card">
+              <p>
+                <strong>Action:</strong> reduce fragility, preserve flexibility, and make deliberate rather than emotional decisions.
+              </p>
+            </div>
+          </div>
+
+          <div class="story-card">
+            <p>
+              In other words, the important question is not whether an economy slows. It is where you stand when it does.
+              From here, you can jump back to <a href="#causes">the causes</a>, revisit <a href="#impacts">the impacts</a>,
+              or return to <a href="#actions">the action plan</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Designed as a modern, interactive, narrative explainer with illustrative visuals and linked sections.
+  </footer>
+
+  <script>
+    const css = getComputedStyle(document.documentElement);
+    const cText = css.getPropertyValue('--text').trim();
+    const cMuted = css.getPropertyValue('--muted').trim();
+    const cAccent = css.getPropertyValue('--accent').trim();
+    const cAccent2 = css.getPropertyValue('--accent-2').trim();
+    const cAccent3 = css.getPropertyValue('--accent-3').trim();
+    const cDanger = css.getPropertyValue('--danger').trim();
+
+    Chart.defaults.color = cMuted;
+    Chart.defaults.borderColor = 'rgba(255,255,255,.08)';
+    Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+    new Chart(document.getElementById('causesChart'), {
+      type: 'line',
+      data: {
+        labels: ['2019','2020','2021','2022','2023','2024','2025'],
+        datasets: [
+          {
+            label: 'Rate pressure',
+            data: [2.0, 1.8, 2.4, 5.8, 7.2, 7.5, 7.0],
+            borderColor: cAccent2,
+            backgroundColor: 'rgba(122,167,255,.18)',
+            fill: true,
+            tension: .35
+          },
+          {
+            label: 'Consumer caution',
+            data: [3.0, 4.5, 5.0, 5.2, 6.0, 6.2, 6.5],
+            borderColor: cAccent,
+            backgroundColor: 'rgba(102,227,196,.12)',
+            fill: true,
+            tension: .35
+          },
+          {
+            label: 'Global friction',
+            data: [2.2, 4.0, 5.5, 4.8, 5.0, 5.8, 5.6],
+            borderColor: cAccent3,
+            backgroundColor: 'rgba(255,209,102,.12)',
+            fill: true,
+            tension: .35
+          }
+        ]
+      },
+      options: {
+        plugins: { legend: { labels: { color: cText } } },
+        scales: {
+          y: { beginAtZero: true, suggestedMax: 10, title: { display:true, text:'Illustrative pressure index' } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('impactBar'), {
+      type: 'bar',
+      data: {
+        labels: ['Construction', 'Consumer tech', 'Retail', 'Hospitality', 'Utilities', 'Healthcare'],
+        datasets: [{
+          label: 'Illustrative slowdown sensitivity',
+          data: [8.4, 7.9, 6.8, 6.1, 3.2, 2.8],
+          backgroundColor: [
+            'rgba(255,123,123,.75)',
+            'rgba(255,123,123,.65)',
+            'rgba(255,209,102,.72)',
+            'rgba(255,209,102,.62)',
+            'rgba(102,227,196,.62)',
+            'rgba(102,227,196,.72)'
+          ],
+          borderRadius: 10
+        }]
+      },
+      options: {
+        plugins: { legend: { display:false } },
+        scales: {
+          y: { beginAtZero:true, suggestedMax:10 }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('householdDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Essentials', 'Debt service', 'Savings rebuild', 'Discretionary spend'],
+        datasets: [{
+          data: [36, 24, 20, 20],
+          backgroundColor: [
+            'rgba(102,227,196,.85)',
+            'rgba(122,167,255,.85)',
+            'rgba(255,209,102,.85)',
+            'rgba(255,123,123,.85)'
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        plugins: { legend: { position:'bottom', labels:{ color:cText } } }
+      }
+    });
+
+    new Chart(document.getElementById('benefitPie'), {
+      type: 'pie',
+      data: {
+        labels: ['Cash-rich companies', 'Discount retailers', 'Long-term investors', 'Restructuring / advisory', 'Essential services'],
+        datasets: [{
+          data: [24, 20, 22, 14, 20],
+          backgroundColor: [
+            'rgba(102,227,196,.85)',
+            'rgba(255,209,102,.85)',
+            'rgba(122,167,255,.85)',
+            'rgba(255,123,123,.85)',
+            'rgba(201,214,255,.85)'
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        plugins: { legend: { position:'bottom', labels:{ color:cText } } }
+      }
+    });
+
+    new Chart(document.getElementById('actionsRadar'), {
+      type: 'radar',
+      data: {
+        labels: ['Liquidity', 'Debt control', 'Income durability', 'Selective investing', 'Efficiency', 'Optionality'],
+        datasets: [{
+          label: 'Recommended focus',
+          data: [9, 8, 8, 6, 9, 8],
+          borderColor: cAccent,
+          backgroundColor: 'rgba(102,227,196,.2)',
+          pointBackgroundColor: cAccent
+        }]
+      },
+      options: {
+        scales: {
+          r: {
+            angleLines: { color:'rgba(255,255,255,.08)' },
+            grid: { color:'rgba(255,255,255,.08)' },
+            suggestedMin:0,
+            suggestedMax:10,
+            pointLabels: { color:cText },
+            ticks: { display:false }
+          }
+        },
+        plugins: { legend: { labels:{ color:cText } } }
+      }
+    });
+
+    // scroll progress
+    const progressBar = document.getElementById('progressBar');
+    const onScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      progressBar.style.width = pct + '%';
+    };
+    window.addEventListener('scroll', onScroll);
+    onScroll();
+
+    // counter animation
+    const counters = document.querySelectorAll('[data-count]');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        const target = parseFloat(el.dataset.count);
+        let start = 0;
+        const duration = 1000;
+        const startTime = performance.now();
+
+        function update(now){
+          const progress = Math.min((now - startTime) / duration, 1);
+          const value = start + (target - start) * progress;
+          el.textContent = value.toFixed(1);
+          if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+        observer.unobserve(el);
+      });
+    }, { threshold: .35 });
+
+    counters.forEach(c => observer.observe(c));
+
+    // simulator
+    const cash = document.getElementById('cash');
+    const debt = document.getElementById('debt');
+    const income = document.getElementById('income');
+    const scoreEl = document.getElementById('score');
+    const scoreText = document.getElementById('scoreText');
+    const tag = document.getElementById('tag');
+    const recs = document.getElementById('recommendations');
+
+    function renderRecommendations(items){
+      recs.innerHTML = items.map(item => `<div class="action-item">${item}</div>`).join('');
+    }
+
+    function updateSimulator(){
+      const cashV = Number(cash.value);
+      const debtV = Number(debt.value);
+      const incomeV = Number(income.value);
+
+      const score = Math.max(0, Math.min(100, Math.round((cashV * 4.2) + (incomeV * 4.3) - (debtV * 3.5) + 35)));
+      scoreEl.textContent = score;
+
+      let label = '';
+      let text = '';
+      let recommendations = [];
+
+      if (score >= 75){
+        label = 'Well positioned';
+        text = 'You appear comparatively resilient and may have room to act selectively while others pull back.';
+        recommendations = [
+          'Keep liquidity ready rather than fully deploying it at once.',
+          'Look for quality assets, customers, or hires others can no longer afford.',
+          'Stay disciplined: resilience can evaporate if you overextend too early.'
+        ];
+      } else if (score >= 55){
+        label = 'Reasonably prepared';
+        text = 'You have a workable base, but a deeper slowdown could expose pressure points.';
+        recommendations = [
+          'Build a larger buffer before taking new risks.',
+          'Prioritise debt reduction and stabilise recurring income.',
+          'Invest in stages, not in one move.'
+        ];
+      } else {
+        label = 'Vulnerable to shock';
+        text = 'A sharper slowdown would likely strain cashflow, flexibility, or both.';
+        recommendations = [
+          'Protect downside first: reduce high-cost debt and unnecessary burn.',
+          'Increase emergency liquidity and cut fragile commitments.',
+          'Focus on income durability before pursuing growth or speculation.'
+        ];
+      }
+
+      scoreText.textContent = text;
+      tag.textContent = label;
+      renderRecommendations(recommendations);
+    }
+
+    [cash, debt, income].forEach(el => el.addEventListener('input', updateSimulator));
+    updateSimulator();
+  </script>
+</body>
+</html>
